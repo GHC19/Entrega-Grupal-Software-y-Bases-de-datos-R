@@ -1,5 +1,5 @@
 ---
-title: "Entrega grupal"
+title: "ELECCIONES Y ENCUESTAS"
 title-slide-attributes:
   data-background-image: "FondoPantalla.png"
   data-background-size: contain
@@ -268,9 +268,7 @@ reemplazar_por_siglas <- function(data, siglas, partidos) {
 
 # ¿Qué partido fue el ganador en los municipios con más de 100.000 habitantes (censo) en cada una de las elecciones?
 
-<details>
-
-<summary>Ver código</summary>
+##
 
 ```{r}
   resultado_ganador <- election_data_final |> 
@@ -289,7 +287,6 @@ reemplazar_por_siglas <- function(data, siglas, partidos) {
     mutate(ganador = fct_reorder(ganador, total_municipios)) # Reordenar los niveles según total_municipios
 
 ```
-
 ```{r}
 ## Llamamos a la funcion de reemplazar por siglas
 resultado_ganador <- reemplazar_por_siglas(
@@ -298,8 +295,6 @@ resultado_ganador <- reemplazar_por_siglas(
   partidos = "ganador"
 )
 ```
-
-</details>
 
 ---
 
