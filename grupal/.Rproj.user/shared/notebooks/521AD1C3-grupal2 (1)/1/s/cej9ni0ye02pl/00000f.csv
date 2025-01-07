@@ -1,0 +1,3 @@
+"0","# Crear columna de fecha"
+"0","datos_largos <- datos_largos |> "
+"0","  mutate(fecha = make_date(year = anno, month = mes, day = 1)) # Asumiendo día 1"

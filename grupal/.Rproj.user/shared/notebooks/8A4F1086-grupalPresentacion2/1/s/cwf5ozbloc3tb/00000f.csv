@@ -1,0 +1,4 @@
+"0","shapefile <- ""DIADMI_Pol_Municipio/DIADMI_Pol_Municipio.shp"""
+"0","municipios_navarra <- st_read(shapefile)"
+"2","Error en st_read(shapefile): no se pudo encontrar la función ""st_read""
+"

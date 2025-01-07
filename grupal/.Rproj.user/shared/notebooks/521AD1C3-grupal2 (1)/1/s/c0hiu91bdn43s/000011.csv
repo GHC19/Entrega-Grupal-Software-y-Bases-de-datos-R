@@ -1,0 +1,7 @@
+"0","# Ordenar por votos y calcular el ranking"
+"0","resultados_ordenados <- datos_agrupados |> "
+"0","  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio) |> "
+"0","  arrange(desc(votos)) |> "
+"0","  mutate(ranking = row_number()) |> "
+"0","  ungroup()"
+"0","head(resultados_ordenados)"

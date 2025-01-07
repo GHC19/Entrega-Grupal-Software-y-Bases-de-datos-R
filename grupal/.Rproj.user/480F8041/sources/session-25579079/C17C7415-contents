@@ -1,0 +1,1247 @@
+---
+title: "Entrega grupal"
+author: "Pablo de Lillo (DNI: 51529343-M), Alejandro Domenech (DNI: 53967501-W), Gonzalo Huerta(DNI: 51487853-F),  Natalia Sánchez(DNI: 51705285-C)"
+format:
+  revealjs:
+    theme: [style.scss]
+    embed-resources: true
+execute: 
+  echo: true
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+## Instrucciones
+
+-   Modificad dentro del documento .qmd vuestros datos personales
+    (nombre y DNI) que se encuentran en el encabezado del archivo.
+
+-   Aseguraos de que el archivo .qmd se renderice correctamente ANTES de
+    continuar editando el documento y que el archivo .html
+    correspondiente se genere en tu carpeta local en el ordenador.
+
+-   Los bloques de código (chunks) creados están vacíos o incompletos.
+    Una vez que edites lo que consideres necesario, debes cambiar cada
+    bloque a #\| eval: true (o eliminarlo directamente) para que se
+    ejecuten.
+
+-   Recuerda que puedes ejecutar los bloques de código uno por uno con
+    el botón play o ejecutar todos los bloques hasta un bloque
+    específico (con el botón situado a la izquierda del anterior).
+
+------------------------------------------------------------------------
+
+## Paquetes necesarios
+
+> Insertad aquí todos los paquetes vayáis necesitando
+
+```{r}
+#rm(list = ls())
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(ggpattern)
+library(sf)
+library(forcats)
+library(gridExtra)
+library(grid)
+library(lubridate)
+library(ggplot2)
+library(data.tree)
+library(circlepackeR)
+library(glue)
+```
+
+------------------------------------------------------------------------
+
+## Entrega grupal
+
+### Datos
+
+La práctica se basará en los [**archivos de datos
+electorales**]{.hl-yellow} que se indican a continuación, recopilando
+datos sobre las elecciones al Congreso de los Diputados en España desde
+2008 hasta la actualidad, así como encuestas, códigos de municipios y
+abreviaturas
+
+```{r}
+# NO TOQUES NADA
+#setwd("D:/AA Máster/Gestión BBDD/01. Entrega Grupal")
+election_data <- read_csv(file = "datos/datos_elecciones_brutos.csv")
+cod_mun <- read_csv(file = "datos/cod_mun.csv")
+surveys <- read_csv(file = "datos/historical_surveys.csv")
+abbrev <- read_csv(file = "datos/siglas.csv")
+
+```
+
+-   `election_data`: archivo con las elecciones al congreso
+-   `cod_mun`: archivo con los códigos y nombres de cada municipio
+-   `abbrev`: siglas de cada partido
+-   `surveys`: encuestas electorales desde 1982.
+    -   `type_survey`: tipo de encuesta (nacional, regional...)
+    -   `date_elec`: fecha de las futuras elecciones a las que se refiere la
+          encuesta
+    -   `id_pollster`, `pollster`, `media`: id y nombre de la empresa
+        encuestadora, así como medio que la encargó
+    -   `field_date_from`, `field_date_to`: fechas de inicio y fin del
+        trabajo de la encuesta
+    -   `exit_poll`: ¿es una encuesta a pie de urna? TRUE/FALSE
+    -   `size`: tamaño muestral de la encuesta (nº de personas encuestadas)
+    -   `turnout`: Estimación del porcentaje de personas que van a ir a votar
+
+------------------------------------------------------------------------
+
+## Objetivos
+
+El objetivo de la entrega es [**realizar un análisis de los datos
+electorales**]{.hl-green}, llevando a cabo la depuración, los resúmenes
+y los gráficos que consideres necesarios, tanto de los resultados como
+de la precisión de las encuestas electorales.
+
+En concreto, debes trabajar únicamente en el **período de tiempo que
+incluye las elecciones desde 2008 hasta las últimas elecciones de 2019**
+
+------------------------------------------------------------------------
+
+## Algunos comentarios
+
+Además de lo que consideres oportuno realizar, los siguientes elementos
+son obligatorios:
+
+-   Cada grupo debe presentar [**antes del 7 de enero
+    (23:59)**]{.hl-red} un análisis de los datos en formato .qmd y
+    .html, en modo Quarto slides, que serán los que presentarán el día
+    de la exposición.
+
+-   Las Quarto slides deben subirse a Github (un miembro de cada grupo
+    deberá proporcionar el enlace).
+
+-   El número máximo de diapositivas será de 45. El tiempo máximo para
+    cada grupo será de 22 minutos (+5-10 minutos para preguntas).
+
+-   Durante la presentación, deberéis explicar (de manera resumida) el
+    análisis realizado, asegurándoos de que cada miembro del equipo
+    hable durante un tiempo similar y que cualquier miembro pueda
+    responder preguntas sobre cualquiera de los pasos realizados. La
+    nota no será la misma para todos los integrantes.
+
+-   Se valorará no solo el contenido, sino también la presentación
+    (estética).
+
+-   El objetivo es demostrar que se ha adquirido el máximo conocimiento
+    del curso
+
+------------------------------------------------------------------------
+
+## Ítems obligatorios
+
+1.  Los datos deben ser convertidos a tidydata donde sea apropiado.
+
+2.  HECHO. Debes incluir al menos un join entre tablas.
+
+3.  Los paquetes `{glue}`, `{forcats}` y `{lubridate}` deben ser
+    utilizados en algún punto
+
+4.  HECHO Los siguientes elementos deben usarse al menos una vez: mutate,
+    summarise, group_by (o su equivalente), case_when
+
+5.  Deberéis definir al menos una función (con más de 5 líneas de
+    código)
+
+6.  Contamos con muchos partidos que se presentan a las elecciones. Solo
+    nos interesarán los siguientes partidos (cuidado: algunos tienen o
+    tenían federaciones - sucursales - con otros nombres):
+
+-   PARTIDO SOCIALISTA OBRERO ESPAÑOL
+-   PARTIDO POPULAR
+-   CIUDADANOS
+-   PARTIDO NACIONALISTA VASCO
+-   BLOQUE NACIONALISTA GALLEGO
+-   UNIDAS PODEMOS - IU (Unidas Podemos, Unidos Podemos, Podemos, IU,
+    Podem, y Ezker Batua).
+-   ESQUERRA REPUBLICANA DE CATALUNYA
+-   EH - BILDU (ahora son una coalición de partidos formada por lo que
+    antes era Sortu, Eusko Alkartasuna, Aralar, Alternatiba).
+-   VOX
+
+7.  Todo lo que no esté en alguno de los anteriores partidos debe ser
+    correctamente reagrupado (y resumido) en `OTROS`
+
+8.  Las siglas deben ser usadas en las visualizaciones (ideas en
+    <https://r-graph-gallery.com/>).
+
+9.  Debes usar todos los archivos en algún momento.
+
+10. Debes descartar las encuestas que:
+
+```         
+-   se refieran a elecciones anteriores a 2008
+-   sean a pie de urna
+-   tamaño muestral desconocido o inferior a 500.
+-   tenga 1 día o menos de trabajo de campo.
+```
+
+11. Deberás responder obligatoriamente a
+
+-   ¿Qué partido fue el ganador en los municipios con más de 100.000
+    habitantes (censo) en cada una de las elecciones?
+
+-   ¿Qué partido fue el segundo cuando el primero fue el PSOE? ¿Y cuando
+    el primero fue el PP?
+
+-   ¿Cómo calibrar el error de las encuestas (recordemos que las
+    encuestas son de intención de voto a nivel nacional)?
+
+-   ¿Cómo analizar la relación entre censo y voto? ¿Es cierto que
+    determinados partidos ganan en las zonas rurales?
+
+Debes incluir [**al menos 2 preguntas "originales" más**]{.hl-orange}
+que consideres interesantes de responder utilizando los datos para
+distinguirte del resto
+
+------------------------------------------------------------------------
+
+## Evaluación
+
+No se valorará más a quien haga más cosas.
+
+Más no siempre es mejor
+
+Se valorará la originalidad (en comparación con el resto de trabajos, ya
+sea en lo analizado, en el tema tratado, etc.), el cariño puesto en la
+entrega (el cariño en la vida es importante) y la relevancia de lo
+realizado.
+
+Una vez que tengas los elementos obligatorios de tu base de datos más o
+menos completos, piensa antes de escribir código: ¿qué podría ser
+interesante? ¿Qué necesito para obtener un resumen tanto numérico como
+visual?
+
+Recuerda que el objetivo real es demostrar un dominio de las
+herramientas vistas a lo largo del curso. Y eso no se mide solo por la
+cantidad de herramientas utilizadas, sino también por la calidad en su
+ejecución.
+
+Deberéis tenerlo todo subido a Github con el enlace generado de manera
+correcta.
+
+Filtrado de las encuestas, bajo las condiciones de Javi:
+
+-   se refieran a elecciones anteriores a 2008
+-   sean a pie de urna
+-   tamaño muestral desconocido o inferior a 500.
+-   tenga 1 día o menos de trabajo de campo.
+
+#TRABAJO EN SÍ
+
+## Partidos de interés de las encuestas
+
+Aquí debajo se hace lo de los puntos 6,7 y 10 para el dataset 'surveys'. Que es 
+agrupar en categorías los partidos que se piden, el resto a la categoría OTROS
+y filtrar los datos en base a unos criterios específicos. 
+
+```{r}
+#Aquí se fitra el dataset según piden en el PUNTO 10 de items obligatorios.
+surveys_filtered <- surveys |> 
+  filter(
+    date_elec >= as.Date("2008-01-01"),  # Elecciones a partir de 2008
+    !exit_poll,  # Excluir encuestas a pie de urna
+    size >= 500,  # Tamaño muestral de al menos 500
+    as.numeric(field_date_to - field_date_from) > 1  # Más de 1 día de trabajo de campo
+  )
+
+#Se definen los partido de interés y el resto van a la categoría otros.
+partidos_interes <- c("PSOE", "EAJ-PNV", "ERC", "EH-BILDU", "PP", "PODEMOS", "CS", "BNG", "VOX")
+
+col_inicio_partidos <- 11 #Es la primera columna donde aparecen los partidos, las columnas de antes son identificadores fechas y demás.
+
+columnas_otros <- setdiff(names(surveys_filtered)[col_inicio_partidos:ncol(surveys_filtered)], partidos_interes) #setdiff te dice los elementos distintos de los dos datasets que le pases. En este caso estan por un lado los partidos de interes y por otro lado todos, los elementos distintos son los partidos que no coinciden y que van a ir a la categoria otros. 
+
+surveys_filtered <- surveys_filtered |> 
+  mutate(
+    OTROS = rowSums(across(all_of(columnas_otros), ~ replace_na(., 0)), na.rm = TRUE) #Se crea una nueva columna llamada OTROS, que contiene la suma de los valores de todas las columnas que no pertenecen a los partidos de interés.
+  ) |> 
+  select(all_of(partidos_interes), OTROS, everything()) |> select(1:20) #all_of(partidos_interes) selecciona y coloca al principio las columnas correspondientes a los partidos de interés. Luego, se agrega la variable creada OTROS y everything() selecciona todas las demás columnas que no han sido mencionadas, manteniendo su orden original.
+#Lo de select(1:20) creo que es redundante.(Pablo)
+
+surveys_filtered
+```
+
+
+Aquí debajo se hace lo de los puntos 6,7 y 10 para el dataset
+'election_data'. Con la diferencia de que como un mismo partido puede tener distintos nombres hay que identificar esos nombres y agruparlos en el correspondiente. Eso es lo que se hace con la lista 'asociaciones'. Y luego ya es igual que el dataset anterior.
+```{r}
+asociaciones <- list(
+    "PARTIDO SOCIALISTA OBRERO ESPAÑOL" = c(
+        "PARTIDO SOCIALISTA OBRERO ESPAÑOL", 
+        "PARTIDO SOCIALISTA DE EUSKADI-EUSKADIKO EZKERRA", 
+        "PARTIT DELS SOCIALISTES DE CATALUNYA",
+        "PARTIDO DOS SOCIALISTAS DE GALICIA-PSOE"
+    ),
+    "PARTIDO POPULAR" = c(
+        "PARTIDO POPULAR", 
+        "PARTIT POPULAR/PARTIDO POPULAR", 
+        "PARTIDO POPULAR/PARTIT POPULAR", 
+        "PARTIDO POPULAR - FORO",
+        "UNION DEL PUEBLO NAVARRO EN COALICION CON EL PARTIDO POPULAR",
+        "NAVARRA SUMA"  #Considero NA+ como PP
+        
+    ),
+    "CIUDADANOS" = c(
+        "CIUDADANOS", 
+        "CIUTADANS-PARTIDO DE LA CIUDADANIA", 
+        "CIUDADANOS-PARTIDO DE LA CIUDADANIA"
+    ),
+    "PARTIDO NACIONALISTA VASCO" = c(
+        "EUZKO ALDERDI JELTZALEA-PARTIDO NACIONALISTA VASCO",
+        "NAFARROA BAI",
+        "GEROA BAI"
+        
+    ),
+    "BLOQUE NACIONALISTA GALLEGO" = c(
+        "BLOQUE NACIONALISTA GALLEGO", 
+        "BNG-NÓS CANDIDATURA GALEGA"
+    ),
+    "UNIDAS PODEMOS - IU" = c(
+        "UNIDAS PODEMOS", 
+        "UNIDOS PODEMOS", 
+        "PODEMOS", 
+        "PODEM", 
+        "IZQUIERDA UNIDA-ALTERNATIVA", 
+        "EZKER BATUA-BERDEAK-ALTERNATIVA", 
+        "IZQUIERDA UNIDA", 
+        "ELKARREKIN PODEMOS"
+    ),
+    "ESQUERRA REPUBLICANA DE CATALUNYA" = c(
+        "ESQUERRA REPUBLICANA DE CATALUNYA", 
+        "ESQUERRA REPUBLICANA/CATALUNYA SÍ"
+    ),
+    "EH - BILDU" = c(
+        "EUSKAL HERRIA BILDU (EH Bildu)",
+        "EUSKAL HERRIA BILDU",
+        "EH - BILDU", 
+        "SORTU", 
+        "EUSKO ALKARTASUNA", 
+        "ARALAR", 
+        "ALTERNATIBA"
+    ),
+    "VOX" = c("VOX")
+)
+
+columnas_votos <- colnames(election_data)[16:ncol(election_data)] #Selecciona todas las columnas que contienen el nombre de cada partido y sus valores son el número de votos. 'columnas_votos' será un vector que contiene el nombre de todos los partidos disponibles de este dataset. 
+
+
+columnas_por_partido <- lapply(asociaciones, function(nombres){
+    intersect(nombres, columnas_votos)
+}) #Para cada partido en la lista asociaciones, va recorriendo la lista 'asociaciones' aplicandole la función intersect. La cual recorre ambos vectores y devuelve las coincidencias. Así que el objeto 'columnas_por_partido' será una lista que va a contener los partidos de interés. 
+
+
+columnas_otros <- setdiff(columnas_votos, unlist(columnas_por_partido)) #identifica las columnas que están en columnas_votos pero no en columnas_por_partido
+
+
+election_data_final <- election_data |> 
+    mutate( #Crea nuevas columnas sumando los votos de las columnas asociadas a cada partido. Luego con rowSums, suma fila a fila los votos correspondientes.
+        `PARTIDO SOCIALISTA OBRERO ESPAÑOL` = rowSums(across(all_of(columnas_por_partido[["PARTIDO SOCIALISTA OBRERO ESPAÑOL"]])), na.rm = TRUE),
+        `PARTIDO POPULAR` = rowSums(across(all_of(columnas_por_partido[["PARTIDO POPULAR"]])), na.rm = TRUE),
+        `CIUDADANOS` = rowSums(across(all_of(columnas_por_partido[["CIUDADANOS"]])), na.rm = TRUE),
+        `PARTIDO NACIONALISTA VASCO` = rowSums(across(all_of(columnas_por_partido[["PARTIDO NACIONALISTA VASCO"]])), na.rm = TRUE),
+        `BLOQUE NACIONALISTA GALLEGO` = rowSums(across(all_of(columnas_por_partido[["BLOQUE NACIONALISTA GALLEGO"]])), na.rm = TRUE),
+        `UNIDAS PODEMOS - IU` = rowSums(across(all_of(columnas_por_partido[["UNIDAS PODEMOS - IU"]])), na.rm = TRUE),
+        `ESQUERRA REPUBLICANA DE CATALUNYA` = rowSums(across(all_of(columnas_por_partido[["ESQUERRA REPUBLICANA DE CATALUNYA"]])), na.rm = TRUE),
+        `EH - BILDU` = rowSums(across(all_of(columnas_por_partido[["EH - BILDU"]])), na.rm = TRUE),
+        `VOX` = rowSums(across(all_of(columnas_por_partido[["VOX"]])), na.rm = TRUE),
+        OTROS = rowSums(across(all_of(columnas_otros)), na.rm = TRUE)
+    ) |> 
+    select( # Reorganiza las columnas, colocando los partidos principales y OTROS después de las columnas descriptivas.
+        1:15, 
+        `PARTIDO SOCIALISTA OBRERO ESPAÑOL`, 
+        `PARTIDO POPULAR`, 
+        `CIUDADANOS`, 
+        `PARTIDO NACIONALISTA VASCO`, 
+        `BLOQUE NACIONALISTA GALLEGO`, 
+        `UNIDAS PODEMOS - IU`, 
+        `ESQUERRA REPUBLICANA DE CATALUNYA`, 
+        `EH - BILDU`, 
+        `VOX`, 
+        OTROS
+    )
+
+election_data_final
+```
+
+## Análisis de los partidos nacionalistas vascos en Navarra
+
+Con el objetivo de analizar la base de datos de "election_data", se
+plantea elegir una provincia con heterogeneidad de partidos políticos.
+En este caso, se selecciona Navarra, donde se tiene una diversidad de
+partidos debido a su contexto político y relaciones históricas.
+
+Esto se realiza sin intenciones políticas, sino con el objetivo de
+presentar un análisis de los datos electorales en una provincia
+específica diferente.
+
+
+
+## Elecciones 2008 vs 2019abr. (Navarra)
+
+Se realizará un análisis comparativo de los resultados de las elecciones
+al Congreso de los Diputados en Navarra en 2008 y 2019.
+
+Para ello, se seleccionarán los datos correspondientes a estos años y se
+compararán los resultados de los partidos políticos de interés en este
+ejercicio.
+
+Se utiliza un mapa de municipios descargado de
+https://geoportal.navarra.es/es/ para graficar los resultados
+
+```{r}
+# Carga del shapefile (mapa)
+shapefile <- "DIADMI_Pol_Municipio/DIADMI_Pol_Municipio.shp"
+municipios_navarra <- st_read(shapefile)
+```
+
+
+
+## Preparamos los datos "election_data" para el análisis de Navarra
+
+En este chunk se preparan los datos electorales (election_data_final) para la provincia de Navarra, específicamente para los años 2008 y 2019 (abril). Además, se realiza un join  con la tabla de códigos municipales (cod_mun) para obtener información adicional de los municipios.
+```{r}
+# Elecciones de 2008 (abril)
+navarra_2008 <- election_data_final |>
+  filter(anno == 2008 & codigo_provincia == "31") |>
+  mutate(cod_mun = paste("13", "31", codigo_municipio, sep = "-")) |>
+  left_join(cod_mun, by = "cod_mun") |> 
+  rename("EUZKO ALDERDI JELTZALEA-PARTIDO NACIONALISTA VASCO" = "PARTIDO NACIONALISTA VASCO")
+
+# Elecciones de 2019 (abril)
+navarra_2019_abril <- election_data_final |>
+  filter(anno == 2019 & mes == "04" & codigo_provincia == "31") |>
+  mutate(cod_mun = paste("13", "31", codigo_municipio, sep = "-")) |>
+  left_join(cod_mun, by = "cod_mun") |> 
+  rename("EUZKO ALDERDI JELTZALEA-PARTIDO NACIONALISTA VASCO" = "PARTIDO NACIONALISTA VASCO")
+
+```
+
+
+
+## ¿Qué tenemos hasta ahora?
+
+Mirando los datos de Navarra en 2008
+
+```{r}
+head(navarra_2008[, c(16, 25, 27)])
+```
+
+Tenemos los votos de los partidos de interés en cada municipio en 2008 y
+2019(Abr)
+
+## Join de los votos con los municipios del mapa
+
+Además de ajustes en la columna de municipios para que el join se
+realice adecuadamente, se genera la variable categórica
+"partido_ganador".
+
+
+El chunk de debajo hace lo siguiente:
+Preparar los datos para visualizar los resultados electorales de Navarra en 2008 en un mapa geoespacial. Para ello, se realizan los siguientes pasos clave:
+
+1. Determinar el partido ganador por municipio.
+2. Estandarizar los nombres de los municipios.
+3. Unir los datos electorales con los datos geoespaciales del shapefile.
+
+```{r}
+#| echo: false
+# Crear el diccionario de equivalencias entre denominaciones y siglas
+siglas_diccionario <- abbrev |> 
+  select(denominacion, siglas) |> 
+  deframe() # Convierte en un vector clave-valor
+
+# Modificar el mutate en navarra_2008 para usar el diccionario
+navarra_2008 <- navarra_2008 |>
+  rowwise() |>
+  mutate(
+    partido_ganador = {
+      valores <- c_across(16:25) # Selección por índices de columnas de partidos
+      nombres <- colnames(navarra_2008)[16:25]
+      max_votos <- max(valores, na.rm = TRUE)
+      if (all(valores == 0, na.rm = TRUE)) {
+        "Sin datos"
+      } else if (sum(valores == max_votos, na.rm = TRUE) > 1) {
+        "Municipios con empate"
+      } else {
+        nombres[which.max(valores)]
+      }
+    }
+  ) |>
+  ungroup() |>
+  mutate(
+    partido_ganador = case_when(
+      partido_ganador %in% names(siglas_diccionario) ~ siglas_diccionario[partido_ganador], # Reemplazar con siglas
+      partido_ganador == "Municipios con empate" ~ "Municipios con empate", # Mantener empates como están
+      TRUE ~ partido_ganador # Dejar sin cambios si no está en el diccionario
+    )
+  )
+
+
+# Unir los datos geoespaciales y calcular nombres corregidos
+mapa_navarra_2008 <- municipios_navarra |>
+  mutate(MUNICIPIO = tolower(MUNICIPIO)) |>
+  left_join(
+    navarra_2008 |>
+      mutate(
+        municipio = tolower(municipio),
+        municipio = gsub("/", " / ", municipio),
+        municipio = case_when(
+          municipio == "romanzado" ~ "romanzado / erromantzatua",
+          municipio == "urraul alto" ~ "urraúl alto",
+          municipio == "urraul bajo" ~ "urraúl bajo",
+          municipio == "arcos, los" ~ "los arcos",
+          municipio == "busto, el" ~ "el busto",
+          municipio == "pueyo" ~ "pueyo / puiu",
+          municipio == "ucar" ~ "úcar",
+          municipio == "atez / atetz" ~ "atetz",
+          municipio == "olaibar" ~ "oláibar",
+          municipio == "juslapeña" ~ "juslapeña / txulapain",
+          municipio == "lizoáin-arriasgoiti" ~ "lizoain-arriasgoiti / lizoainibar-arriasgoiti",
+          municipio == "saldías" ~ "saldias",
+          TRUE ~ municipio
+        )
+      ),
+    by = c("MUNICIPIO" = "municipio")
+  )
+
+```
+
+<details>
+
+<summary>Ver Código del 2019</summary>
+
+```{r}
+# Crear 'partido_ganador' en los datos de 2019
+navarra_2019_abril <- navarra_2019_abril |>
+  rowwise() |>
+  mutate(
+    partido_ganador = {
+      valores <- c_across(16:25) # Selección por índices de columnas de partidos
+      nombres <- colnames(navarra_2019_abril)[16:25]
+      max_votos <- max(valores, na.rm = TRUE)
+      if (all(valores == 0, na.rm = TRUE)) {
+        "Sin datos"
+      } else if (sum(valores == max_votos, na.rm = TRUE) > 1) {
+        "Municipios con empate"
+      } else {
+        nombres[which.max(valores)]
+      }
+    }
+  ) |>
+  ungroup() |>
+  mutate(
+    partido_ganador = case_when(
+      partido_ganador %in% names(siglas_diccionario) ~ siglas_diccionario[partido_ganador], # Reemplazar con siglas
+      partido_ganador == "Municipios con empate" ~ "Municipios con empate", # Mantener empates como están
+      TRUE ~ partido_ganador # Dejar sin cambios si no está en el diccionario
+    )
+  )
+
+# Unir los datos geoespaciales y calcular nombres corregidos para 2019
+mapa_navarra_2019 <- municipios_navarra |>
+  mutate(MUNICIPIO = tolower(MUNICIPIO)) |>
+  left_join(
+    navarra_2019_abril |>
+      mutate(
+        municipio = tolower(municipio),
+        municipio = gsub("/", " / ", municipio),
+        municipio = case_when(
+          municipio == "romanzado" ~ "romanzado / erromantzatua",
+          municipio == "urraul alto" ~ "urraúl alto",
+          municipio == "urraul bajo" ~ "urraúl bajo",
+          municipio == "arcos, los" ~ "los arcos",
+          municipio == "busto, el" ~ "el busto",
+          municipio == "pueyo" ~ "pueyo / puiu",
+          municipio == "ucar" ~ "úcar",
+          municipio == "atez / atetz" ~ "atetz",
+          municipio == "olaibar" ~ "oláibar",
+          municipio == "juslapeña" ~ "juslapeña / txulapain",
+          municipio == "lizoáin-arriasgoiti" ~ "lizoain-arriasgoiti / lizoainibar-arriasgoiti",
+          municipio == "saldías" ~ "saldias",
+          TRUE ~ municipio
+        )
+      ),
+    by = c("MUNICIPIO" = "municipio")
+  )
+
+```
+
+
+
+## Representación 2008 vs 2019
+
+En este chunk, con todo lo anterior ya se hace el gráfico. 
+```{r}
+#| echo: false
+# Actualización de los colores
+colores <- c(
+  "Otros" = "grey70",
+  "PP" = "#00ADE0",
+  "PSOE" = "#D21B00",
+  "EAJ-PNV" = "#007A45",
+  "EH - BILDU" = "#00C19F",
+  "UNIDAS PODEMOS - IU" = "#6C00A4",
+  "Municipios con empate" = "yellow" # Color morado para empate
+)
+
+
+# Crear un único DataFrame para los dos años
+mapa_combined <- bind_rows(
+  mapa_navarra_2008 |>  mutate(año = "2008"),
+  mapa_navarra_2019 |>  mutate(año = "2019")
+)
+
+# Crear el gráfico con facetas para cada año
+ggplot(mapa_combined) +
+  geom_sf(aes(fill = partido_ganador), color = "black", size = 0.2) +
+  scale_fill_manual(values = colores, na.value = "grey80") +
+  facet_wrap(~año, ncol = 2) +
+  labs(
+    title = "NAVARRA",
+    fill = "Partido Ganador"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 8),  # Ajustar tamaño del texto de la leyenda
+    legend.title = element_text(size = 10, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+
+
+## Podríamos ver graficamente diferencias en la participación en Navarra entre 2008 y 2019
+
+```{r}
+# Calcular el porcentaje de participación para 2008
+mapa_navarra_2008 <- mapa_navarra_2008 |>
+  mutate(
+    porcentaje_participacion = (participacion_2 / censo) * 100 # Calcula el porcentaje
+  )
+
+# Calcular el porcentaje de participación para 2019
+mapa_navarra_2019 <- mapa_navarra_2019 |>
+  mutate(
+    porcentaje_participacion = (participacion_2 / censo) * 100 # Calcula el porcentaje
+  )
+```
+
+
+## Mapa de participación en Navarra en 2008 y 2019
+
+```{r}
+
+# Crear un único DataFrame para los dos años con la columna "año"
+mapa_combined <- bind_rows(
+  mapa_navarra_2008 |> mutate(año = "2008"),
+  mapa_navarra_2019 |> mutate(año = "2019")
+)
+
+ggplot(mapa_combined) +
+  geom_sf(aes(fill = porcentaje_participacion), color = "black", size = 0.2) +
+  scale_fill_gradientn(
+    colors = c("#f7fbff", "#ADD8E6", "#1E90FF", "#000080"), # Gradiente azul con más contraste
+    values = scales::rescale(c(0, 30, 70, 100)), # Ajusta la intensidad de los colores
+    na.value = "grey80",
+    name = "Participación (%)"
+  ) +
+  facet_wrap(~año, ncol = 2) +
+  labs(
+    title = "Participación Electoral por Municipio",
+    subtitle = "Porcentaje de participación final en las elecciones (2008 vs 2019)",
+    fill = "Participación (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+
+```
+
+# Punto 11
+
+###Pregunta 1
+--> ¿Qué partido fue el ganador en los municipios con más de 100.000
+habitantes (censo) en cada una de las elecciones?
+
+Voy a intentar responder esto haciendo la mayor cantidad de ítmes
+obligatorios. Se podría hacer de otra manera, quitando la función por
+ejemplo. Según avancemos con la práctica voy viendo (Pablo)
+
+En la función se usan mutate, summarise, group_by y case_when (ítem 4)
+
+```{r}
+#Esta función te filtra los municipios de un dataset (data) en función de un número mínimo que tú le pongas (censo_min) ero si le pones un dataset con otro orden en las columnas, va a dar error.
+analizar_ganador_municipios <- function(data, censo_min) { # Filtrar municipios con más de 100,000 habitantes
+  
+  data |> 
+    filter(censo > censo_min) |> # Filtrar municipios con más de 100,000 habitantes
+    mutate( #Crea la columna ganador. 
+      ganador = names(data)[15 + apply(across(16:ncol(data)), 1, which.max)], #Desde la columna 16 en adelante (columnas q corresponden a los partidos políticos) la función apply recorre cada fila y devuelve el nombre de la columna con el valor más alto, osea el partido con más votos.
+      #Con names(data)[15 + ...]: Convierte el índice en el nombre de la columna correspondiente (el nombre del partido ganador).
+      fecha = make_date(year = anno, month = mes) # Agrupación solo ha fecha porque si agrupas también por ganador se repiten las fechas.
+    ) |> 
+    group_by(fecha, ganador) |> # Agrupar por fecha y partido ganador
+    summarise(
+      total_municipios = n(),   # Número de municipios ganados por cada partido
+      total_censo = sum(censo)  # Suma del censo en municipios ganados
+    ) |> 
+    mutate(
+      categoria = ganador # Asignar el nombre del partido ganador directamente a la categoría
+    ) |> 
+    arrange(desc(total_municipios)) |> # Ordenar por número de municipios ganados
+    mutate(ganador = fct_reorder(ganador, total_municipios)) # Reordenar los niveles según total_municipios
+}
+```
+
+
+Aplicar la función con lo que pide la pregunta, que son 100.000 habitantes mínimo. 
+```{r}
+resultado_ganador <- analizar_ganador_municipios(election_data_final,100000)
+resultado_ganador
+```
+
+Las columnas del dataset significan esto: 
+fecha → fecha de las elecciones.
+ganador → Partido ganador en ese grupo (o NA si no se pudo determinar).
+total_municipios → Número de municipios con más de 100.000 habitantes
+ganados por ese partido en ese año. 
+total_censo → Suma total de
+habitantes (censo) en los municipios ganados por ese partido en ese año.
+categoria → Clasificación del partido en tres categorías: "Dominio
+PSOE","Dominio PP" y "Otros"
+
+En la variable que estas creando ganador, la columna 16 ya es PSOE,
+luego si pones "16 + ..." no te va a contar la 16 (luego nunca ganaba
+PSOE), porque te coge a partir de la siguiente, solo habia que poner 15
++. Además los NA's eran porque te estaba al haber movido como las
+columnas te estaba cerando una nueva luego cuando ganaba "OTROS" te
+salia NA. Ahora ya no hay. Además en al función he creado tambien la
+variable fecha con el año y el mes ya que en algún año se repetieron las
+elecciones luego eso cuanta como 2 elecciones distintas (en concreto en
+2019) y así usamos el paquete lubridate (item 3) (Natalia)
+
+
+Visualizar los resultados (ítem 8)
+```{r}
+resultado_ganador <- resultado_ganador |> 
+  mutate(fecha_factor = factor(fecha, levels = unique(fecha)))  # He creado la fecha a factor para que me salgan a la misma distancia porque si no las elecciones que se repiten se me juntaban mucho y no quedaba bonito ;)
+# Gráfico de barras con partidos ganadores en municipios grandes por año
+ggplot(resultado_ganador) +
+  geom_col(aes(x = fecha_factor, y = total_municipios, fill = ganador), alpha = 0.8, position = "dodge2") +
+  scale_fill_manual(values = c("#707070","#dc342c", "#1354a3", "#74b22d")) +
+  scale_y_continuous(breaks = seq(0,60, by = 5)) +
+  labs(
+    title = "Partido Ganador en Municipios con más de 100.000 Habitantes",
+    x = "Partido",
+    y = "Número de Municipios Ganados",
+    fill = "Partidos Políticos:"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, size = 12, face = "bold", color = "grey30"), 
+        legend.position = "bottom", panel.grid.minor.x = element_blank(), legend.text = element_text(size = 8))
+
+```
+
+LO SIENTO! Pero He cambiado la grafica ya que en la pregunta decia que:
+¿Qué partido fue el ganador en los municipios con más de 100.000
+habitantes (censo) en cada una de las elecciones? Luego habia que
+hacerlo por cada eleccion (x = fecha) y he quitado la varaible categoria
+porque en este caso creo que no tenia sentido usarala. Entiendo que la
+has creado para la pregunta 2. Además he puesto las barras a los lados
+para poder ver así más claramente quien gana en cada año.
+
+
+###Pregunta 2
+-   ¿Qué partido fue el segundo cuando el primero fue el PSOE? ¿Y cuando
+    el primero fue el PP?
+
+Podemos verlo a distintos niveles (municipio, provincia, ccaa y a nivel nacional) según los datos que tenemos en election_data_final. Vamos a empezar viendolo a nivel municipal. 
+
+Primero convertimos nuestros datos para su uso:
+
+```{r}
+#Formato long data
+datos_largos <- election_data_final |> 
+  pivot_longer(
+    cols = 16:ncol(election_data_final), 
+    names_to = "partido", # Crear una columna con los nombres de los partidos
+    values_to = "votos"    # Crear una columna con los votos
+  )
+
+```
+
+```{r}
+# Crear columna de fecha
+datos_largos <- datos_largos |> 
+  mutate(fecha = make_date(year = anno, month = mes, day = 1)) # Asumiendo día 1
+```
+
+Antes necesitamos consolidar los datos para que cada municipio tenga una única fila. Para ello vamos a sumar los votos de todas las filas con el mismo codigo de municipio
+```{r}
+# Consolidar votos a nivel de municipio y fecha
+datos_agrupados <- datos_largos |> 
+  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio, partido) |> 
+  summarise(votos = sum(votos, na.rm = TRUE), .groups = "drop")
+
+head(datos_agrupados)
+```
+
+Lo siguiente es hacer un ranking por municipios, de forma que tengamos en qué posición quedó cada partido en cada municipio
+```{r}
+# Ordenar por votos y calcular el ranking
+resultados_ordenados <- datos_agrupados |> 
+  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio) |> 
+  arrange(desc(votos)) |> 
+  mutate(ranking = row_number()) |> 
+  ungroup()
+head(resultados_ordenados)
+```
+
+Una vez tenemos el ranking, nos quedamos con las posiciones 1 y 2 de cada municipio, filtrando cuando en la posición 1 se encuentra PSOE o PP unicamente. Finalmente, contamos el numero de municipios que se repite segunda posición
+```{r}
+# Filtrar y calcular el segundo partido
+segundo_partido_municipios <- resultados_ordenados |> 
+  filter(ranking <= 2) |> 
+  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio) |> 
+  mutate(primer_partido = partido[ranking == 1]) |> 
+  filter(primer_partido %in% c("PARTIDO SOCIALISTA OBRERO ESPAÑOL", "PARTIDO POPULAR") & ranking == 2) |> 
+  ungroup()
+
+# Contar el número de municipios para cada combinación de primer y segundo partido
+segundo_partido_municipios_grouped <- segundo_partido_municipios |> 
+  group_by(fecha, primer_partido, partido) |> 
+  summarise(frecuencia = n_distinct(codigo_municipio), .groups = "drop")
+```
+
+Una vez tenemos estos datos, solo queda representarlos. Utilizaremos un mapa de círculos jerárquicos del paquete circlepackeR. Representaremos el año de la elección, el primer partido y a continuación quien quedó en segunda posición.
+```{r}
+# Crear estructura jerárquica para el gráfico
+segundo_partido_municipios_grouped$pathString <- paste(
+  "Resultados",
+  segundo_partido_municipios_grouped$fecha,
+  segundo_partido_municipios_grouped$primer_partido,
+  segundo_partido_municipios_grouped$partido,
+  sep = "/"
+)
+
+# Crear un nodo jerárquico
+arbol_datos_municipios <- as.Node(segundo_partido_municipios_grouped)
+
+# Generar el gráfico
+grafico_municipios <- circlepackeR(
+  arbol_datos_municipios,
+  size = "frecuencia",
+  color_min = "hsl(412,80%,80%)",
+  color_max = "hsl(228,30%,40%)", 
+  width = NULL, 
+  height = NULL
+)
+
+grafico_municipios
+
+```
+Grafico interactivo cuando haces click en el año puedes ver los dos partidos cuando han quedado primero y si volvemos a hacer click podemos ver quienes han quedado segundo cuando ellos han quedado primero. No sé si me termina de convencer el gráfico.
+####convence??
+
+Por último, una función con glue para cuando preguntemos por un municipio nos de como respuesta si quedó PP o PSOE en primera posición y, de ser así, quien quedó segundo:
+```{r}
+# Función actualizada para obtener siempre el segundo partido, con filtro por municipio, fecha, ccaa y provincia
+obtener_segundo_partido <- function(ccaa, provincia, municipio, fecha) {
+  # Filtrar los resultados para el municipio, fecha, ccaa y provincia deseada
+  resultados_municipio <- segundo_partido_municipios |> 
+    filter(
+      codigo_ccaa == ccaa,
+      codigo_provincia == provincia, 
+      codigo_municipio == municipio,  
+      fecha == fecha 
+    )
+  
+  # Verificar si hay resultados disponibles para el municipio y fecha
+  if (nrow(resultados_municipio) == 0) {
+    return(glue("No hay resultados disponibles para el municipio con código {municipio}, fecha {fecha}, comunidad autónoma {ccaa} y provincia {provincia}."))
+  }
+  
+  # Obtener el primer y segundo partido
+  primer_partido <- resultados_municipio$primer_partido[1]  # Primer partido en esa fecha y municipio
+  segundo_partido <- resultados_municipio$partido[1]        # Partido en segunda posición
+  
+  # Formatear la respuesta con glue
+  respuesta <- glue(
+    "En el municipio introducido,  el {fecha}, el primer partido fue {primer_partido} y el segundo partido fue {segundo_partido}. "
+  )
+  
+  return(respuesta)
+}
+
+# Ejemplo de uso:
+obtener_segundo_partido("01", "14", "006", "2008-03-01")
+# Este ejemplo corresponde a Añora, municipio de Córdoba en Andalucía
+
+# Otro ejemplo
+obtener_segundo_partido("01", "29", "067", "2019-04-01")
+# Ejemplo de municipio y provincia Málaga, en Andalucía en 2019
+```
+He conseguido hacer que funcione con dos casos específicos pero es una jodienda de función porque:
+1.- No puedes introducir numeros al azar
+2.- Los numeros tienen que ser exactos ("01" de ccaa tiene que ser "01", como sea solo 1 ya no lo coge)
+3.- Aunque los busques exactos pueden no haber datos
+4.- Aunque haya datos a lo mejor los he filtrado porque coge solo de la tabla donde están los numeros 2 cuando pp y psoe es 1 pero yoquesé algo es algo
+Tampoco me convence pero la cabeza no da para más
+
+
+###Pregunta 3
+
+-   ¿Cómo calibrar el error de las encuestas (recordemos que las
+    encuestas son de intención de voto a nivel nacional)?
+    
+Para responder a la pregunta vamos a hacer lo siguiente:
+Calcular y comparar el error entre los resultados estimados por las encuestas y los resultados reales de las elecciones a nivel nacional, tanto en términos absolutos como porcentuales.
+
+
+1. En primer lugar hacemos un join entre los resultados reales (election_data_final) y las predicciones (surveys_filtered) basándonos en la fecha de las elecciones.  
+
+
+election_data_final  tiene los votos desagregados por comunidad autónoma, provincia y municipio. Además de que tiene el número de votos, no el porcentaje. 
+
+surveys_filtered tiene las estimaciones a nivel nacional. Y tiene el porcentaje. 
+
+----
+
+Preparamos el dataset 'election_data_final' para poder hacer el join bien y 
+luego calcular el error.
+
+Primero se suman todos los votos para que sea a nivel nacional y no desagregado 
+por comunidad autónoma, provincia y municipio.
+```{r}
+election_data_nacional <- election_data_final |> 
+  mutate(fecha_eleccion = as.character(glue("{anno}-{mes}"))) |> #Con esto creamos la variable en base a la cual vamos a sumar por grupos, y además luego sirve como clave para hacer el join y utilizamos la función glue que hacía falta
+  group_by(fecha_eleccion) |>  #Agrupamos como decía
+  summarise(
+    across( # Sumamos los votos de cada partido por fecha
+      c(`PARTIDO SOCIALISTA OBRERO ESPAÑOL`, `PARTIDO POPULAR`, `CIUDADANOS`,
+        `PARTIDO NACIONALISTA VASCO`, `BLOQUE NACIONALISTA GALLEGO`,
+        `UNIDAS PODEMOS - IU`, `ESQUERRA REPUBLICANA DE CATALUNYA`,
+        `EH - BILDU`, `VOX`, OTROS),
+      ~sum(.x, na.rm = TRUE)  
+    )
+  ) |> 
+  mutate( #Creamos la variable del total de votos en cada elección porque después hay crear la variable que represente el porcentaje de votos, no el número de votos. Porque como decía antes está así en surveys_select
+    total_votos = rowSums(across(c(`PARTIDO SOCIALISTA OBRERO ESPAÑOL`, `PARTIDO POPULAR`, 
+                                   `CIUDADANOS`, `PARTIDO NACIONALISTA VASCO`, 
+                                   `BLOQUE NACIONALISTA GALLEGO`, `UNIDAS PODEMOS - IU`, 
+                                   `ESQUERRA REPUBLICANA DE CATALUNYA`, `EH - BILDU`, 
+                                   `VOX`, OTROS)), na.rm = TRUE)
+  ) |> 
+  arrange(fecha_eleccion)  #Ordenamos por fecha de elección (no es necesario del todo pero queda mejor)
+
+election_data_nacional
+```
+
+Ahora con esto creamos la variable porcentaje:
+```{r}
+# Calcular porcentajes, redondear a 1 decimal y mantener solo columnas de porcentaje
+election_data_nacional <- election_data_nacional |> 
+  mutate(
+    across(
+      c(`PARTIDO SOCIALISTA OBRERO ESPAÑOL`, `PARTIDO POPULAR`, `CIUDADANOS`,
+        `PARTIDO NACIONALISTA VASCO`, `BLOQUE NACIONALISTA GALLEGO`,
+        `UNIDAS PODEMOS - IU`, `ESQUERRA REPUBLICANA DE CATALUNYA`,
+        `EH - BILDU`, `VOX`, OTROS),
+      ~ round((.x / total_votos) * 100, 1),
+      .names = "pct_{.col}"
+    )
+  ) |> 
+  select(fecha_eleccion, starts_with("pct_"))
+
+election_data_nacional
+```
+
+
+
+
+Renombro los partidos con sus siglas para que encaje con surveys
+
+####Falta
+(esto lo tendría que haber hecho con el datset abbrev porque además hace falta usarlo y de momento no lo hemos hecho creo pero no me sale)
+```{r}
+# Crear un diccionario para mapear nombres largos a siglas
+partido_siglas <- c(
+  "PARTIDO SOCIALISTA OBRERO ESPAÑOL" = "PSOE",
+  "PARTIDO POPULAR" = "PP",
+  "CIUDADANOS" = "CS",
+  "PARTIDO NACIONALISTA VASCO" = "EAJ-PNV",
+  "BLOQUE NACIONALISTA GALLEGO" = "BNG",
+  "UNIDAS PODEMOS - IU" = "PODEMOS",
+  "ESQUERRA REPUBLICANA DE CATALUNYA" = "ERC",
+  "EH - BILDU" = "EH-BILDU",
+  "VOX" = "VOX",
+  "OTROS" = "OTROS"
+)
+
+# Renombrar las columnas usando el diccionario
+election_data_nacional <- election_data_nacional |> 
+  rename_with(
+    .fn = ~ paste0("pct_", partido_siglas[gsub("^pct_", "", .x)]),  # Reemplazar por siglas
+    .cols = starts_with("pct_")  # Solo columnas que empiecen con pct_
+  )
+
+# Mostrar el resultado
+election_data_nacional
+```
+
+Hay filas que no suman exactamente 100 por el redondeo pero esta bien (creo)
+
+
+
+Ahora preparamos el otro dataset 'surveys_filtered'
+
+
+Quitamos las variables que no hacen falta, porque si no al hacer el join va a haber muchas.
+type_survey --> tipo de encuesta nacional, regional, etc... En este dataset son todas nacional. 
+exit_poll --> si es una encuesta a pie de urna o no. En este dataset son todas false
+turnout --> Estimación del porcentaje de personas que van a ir a votar. No nos aporta información para esta pregunta.
+```{r}
+surveys_select <- surveys_filtered |>
+  select(-type_survey, -exit_poll, -turnout) |> 
+    mutate( fecha_eleccion = as.character( glue("{year(date_elec)}-{sprintf('%02d', month(date_elec))}") ) ) |> #Creamos la variable fecha igual que la otra para unir mediante esta clave. Lo de sprint hace falta para que coincida con la otra clave
+      select(-date_elec) #Ahora esta sobra
+
+surveys_select
+```
+
+
+
+Ahora que tenemos todo, 
+
+El join se hace asi:  surveys_select es el que 'se mantiene a la izquierda' y se mantienen todas sus obs como están. Por otro lado, 'election_data_nacional' es el dataset del que se pega la informacion como 'por la derecha' y se repiten sus observaciones. Y se repiten porque surveys_select tiene diferentes estimaciones (del porcentaje de voto de cada partido) para cada eleccion y para cada empresa que hace la encuesta (la empresa se identifica por id_pollster y el nombre aparece en pollster). Con esto se calcula el error para cada estimacion diferente hecha (restando obs en valor absoluto). Y luego con esto calculamos el error medio por elecciones celebradas y por partido haciendo la media del error para cada una de ellas (identificada con la variable fecha_eleccion) y para cada partido.
+
+```{r}
+
+error_encuestas <- surveys_select |> 
+#Realizar el join entre surveys_select y election_data_nacional
+  left_join(election_data_nacional, by = "fecha_eleccion") |> 
+      mutate(
+    across(
+      c(PSOE, PP, CS, `EAJ-PNV`, BNG, PODEMOS, ERC, `EH-BILDU`, VOX, OTROS), #Con esto seleccionas estas columnas. 
+      ~ abs(.x - get(paste0("pct_", cur_column()))), #Con la fila de arriba vas a ir recorriendo todo ese vector entonces '.x' rerpesenta la columan actual. Luego con el get busca en el dataset lo de dentro de los parantesis y devuelve sus valores. Con paste0("pct_", cur_column())) lo que haces es que a la columna actual (current column con cur_column) le pegas el prefijo pct_ que es como he llamado al valor real del porcentaje de voto a ese partido. Entonces al restar esos dos valores y hacer su valor absoluto, estamos calculando el error. 
+      .names = "error_abs_{.col}" #Ese cálculo para cada partido se va a llamar error_abs_partido_correspondiente. 
+    )
+  )
+    
+```
+
+
+Esto para comprobar que está bien: (habrá que borrarlo para la presentación)
+```{r}
+# Extraer nombres únicos de los partidos
+partidos <- c("PSOE", "PP", "CS", "EAJ-PNV", "BNG", "PODEMOS", "ERC", "EH-BILDU", "VOX", "OTROS")
+
+# Crear el orden dinámicamente
+orden_columnas <- c(
+  "fecha_eleccion", "id_pollster", "pollster", "media", "size", "field_date_from", "field_date_to",
+  unlist(lapply(partidos, function(partido) {
+    c(partido, paste0("pct_", partido), paste0("error_abs_", partido))
+  }))
+)
+
+# Reorganizar las columnas
+error_encuestas <- error_encuestas |> select(all_of(orden_columnas))
+error_encuestas
+```
+
+
+Y esto sería el error medio por partido
+```{r}
+# Calcular el error absoluto medio por partido para cada elección
+error_medio_partido_fecha <- error_encuestas |> 
+  group_by(fecha_eleccion) |> #Hacemos los cálculos por elecciones. 
+  summarise( #Función para hacer el cálculo.
+    across( #Función para recorrer las columnas.
+      starts_with("error_abs_"),  #Seleccionamos las columnas que empiecen por error_abs_ que es de las que queremos hacer la media. 
+      ~ if (all(is.na(.x))) NA else mean(.x, na.rm = TRUE), #Hay columnas que son todo missing, entonces para que no haga la media sobre eso y la haga para los que si hay algún valor e ignorando los missing.
+      .names = "mean_{.col}" #Llamamos a esas columnas mean_error_abs_parido_correspondiente. 
+    )
+  ) |> 
+  pivot_longer( #Ponemos el dataset en formato largo para el gráfico y porque se ve mejor así. 
+    cols = -fecha_eleccion, #Pivotamos todas menos la variable fecha_eleccion
+    names_to = "partido", #Los nombres de las columnas de las cols pivotadas van a estar en esta variable. 
+    names_prefix = "mean_error_abs_", #Elimina ese prefijo para que quede solo el nombre del partido.
+    values_to = "error_abs_medio" #Los valores calculados van a esta variable.
+  )
+
+error_medio_partido_fecha
+```
+
+Los NA son porque todas las columnas son missing. Por ejemplo, Ciudadanos en 2008 era un partido muy local en Cataluña y no tenía representación significativa a nivel nacional. Podemos en 2008 no existía, se fundó en 2014. EH-Bildu se se fundó en 2012 y VOX en 2013.
+
+
+
+Resumen visual de los datos
+```{r, warning=FALSE}
+
+#Cada partido con su color de campaña.
+colores_partidos <- c(
+  "PSOE" = "#E63946",   
+  "PP" = "#2DA7DE",      
+  "CS" = "#F77F00",      
+  "EAJ-PNV" = "#2A9D8F", 
+  "BNG" = "#8AB17D",     
+  "PODEMOS" = "#6A4C93",
+  "ERC" = "#FFDD00",     
+  "EH-BILDU" = "#4E8C48",
+  "VOX" = "#5BC236",     
+  "OTROS" = "#BDBDBD"    
+)
+
+ggplot(error_medio_partido_fecha, aes(x = fecha_eleccion, y = error_abs_medio, fill = partido)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = colores_partidos) +  # Aplicar colores personalizados
+  labs(
+    title = "Error Medio Absoluto por Partido y Fecha de Elección",
+    x = "Fecha de Elección",
+    y = "Error Medio Absoluto",
+    fill = "Partido"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"  
+  )
+
+```
+Vemos que sobre todo fallan más en los partido mas minoritarios. Aunque en las elecciones de 2011 las encuestas fallaron bastante con el PSOE, y luego en las de 2015, 2016 y las dos de 2019 fallaron mucho tambien con ciudadanos. 
+
+
+  
+### Pregunta 4 
+
+-   ¿Cómo analizar la relación entre censo y voto? ¿Es cierto que
+    determinados partidos ganan en las zonas rurales?
+
+Primero calculamos cuál es el partido ganador en cada municipio (que es el nivel más bajo de agregacion después de comunidad autónoma y provincia)
+```{r}
+election_data_final <- election_data_final |> 
+  mutate(
+    partido_ganador = apply(
+      select(election_data_final, `PARTIDO SOCIALISTA OBRERO ESPAÑOL`, `PARTIDO POPULAR`, 
+             `CIUDADANOS`, `PARTIDO NACIONALISTA VASCO`, `BLOQUE NACIONALISTA GALLEGO`,
+             `UNIDAS PODEMOS - IU`, `ESQUERRA REPUBLICANA DE CATALUNYA`,
+             `EH - BILDU`, `VOX`, OTROS), 
+      1, function(row) names(row)[which.max(row)])
+  )
+```
+
+
+Después categorizamos la variable censo en 4 categorías Rural, Semi-Rural, 
+Semi-Urbana y Urbana. En base a una mezcla entre los criterios del INE y Eurostat, ya que no hay un consenso claro. 
+Esta variable va a hacer falta para el gráfico y el contraste que vienen 
+a continuación. 
+```{r}
+election_data_final <- election_data_final |> 
+  mutate(
+    categoria_censo = case_when(
+      censo > 10000 ~ "Urbana",
+      TRUE ~ "Rural"
+    )
+  )
+
+#Tabla de frecuencias de las categorías creadas
+table(election_data_final$categoria_censo)
+```
+
+
+####Falta 
+Si se puede utilizar el dataset abbrev para generar las abreviaciones de los partidos mejor.
+```{r}
+# Asegurarse de que los valores en partido_ganador coincidan exactamente con los nombres en colores_partidos
+election_data_final <- election_data_final |> 
+  mutate(
+    partido_ganador = recode(
+      partido_ganador,
+      "PARTIDO SOCIALISTA OBRERO ESPAÑOL" = "PSOE",
+      "PARTIDO POPULAR" = "PP",
+      "CIUDADANOS" = "CS",
+      "PARTIDO NACIONALISTA VASCO" = "EAJ-PNV",
+      "BLOQUE NACIONALISTA GALLEGO" = "BNG",
+      "UNIDAS PODEMOS - IU" = "PODEMOS",
+      "ESQUERRA REPUBLICANA DE CATALUNYA" = "ERC",
+      "EH - BILDU" = "EH-BILDU",
+      "VOX" = "VOX",
+      "OTROS" = "OTROS"
+    )
+  )
+
+# Gráfico con los colores específicos
+ggplot(election_data_final, aes(x = categoria_censo, fill = partido_ganador)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(
+    values = colores_partidos,
+    breaks = names(colores_partidos) # Ordenar los colores según la lista
+  ) +
+  labs(
+    title = "Distribución del Partido Ganador por Categoría de Censo",
+    x = "Categoría de Censo",
+    y = "Proporción",
+    fill = "Partido Ganador"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+
+```
+Parece que en las zonas rurales  gana más el PP mientras que en el resto de zonas están equiparados los partidos que ganan que son:
+PP, PSOE y otros están bastane equiparados
+
+Ahora, para contrastar de manera estadística si hay asociación o no entre el censo y el partido ganador. Vamos a realizar prueba exacta de Fisher, porque como vemos a continuación en la tabla de contingencia hay valores por debajo del 5, lo cual hace que la prueba chi-cuadrado no sea fiable. 
+
+En primer lugar.  creamos la tabla de contingencia necesaria:
+```{r}
+tabla_contingencia <- table(election_data_final$categoria_censo, election_data_final$partido_ganador)
+tabla_contingencia
+```
+
+La prueba exacta de Fisher utiliza un cálculo combinatorio para determinar el p-valor exacto. Con una tabla de 2x8 y valores altos o asimétricos, el número de combinaciones posibles crece exponencialmente y esto supera los límites de memoria y capacidad de procesamiento de R. Por lo que utilizamos la simulación de Monte Carlo la cual aproxima el p-valor mediante un gran número de simulaciones aleatorias, reduciendo así la carga computacional.
+
+```{r}
+fisher_test <- fisher.test(tabla_contingencia, simulate.p.value = TRUE, B = 100000)
+fisher_test
+```
+H0: La categoría de censo (Rural/Urbana) y el partido ganador son independientes. Es decir, el partido ganador no depende de si la zona es rural o urbana.
+H1: Hay asociación entre la categoría de censo y el partido ganador. Es decir, el partido ganador sí depende de si la zona es rural o urbana.
+
+Entonces respondiendo a la pregunta:
+¿Es cierto que determinados partidos ganan en las zonas rurales?
+Vemos que partidos como el PP (principalmente) y el PSOE tienen una mayor representación en zonas rurales, mientras que otros partidos tienen un comportamiento más diverso en las zonas urbanas.
+
+
+
+
+
+
+
+
+

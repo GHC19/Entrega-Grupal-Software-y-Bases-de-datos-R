@@ -1,0 +1,66 @@
+"0","#rm(list = ls())"
+"0","library(tidyverse)"
+"0","library(ggplot2)"
+"0","library(viridis)"
+"2","Cargando paquete requerido: viridisLite
+"
+"0","library(ggpattern)"
+"0","library(sf)"
+"2","Linking to GEOS 3.12.2, GDAL 3.9.3, PROJ 9.4.1; sf_use_s2() is TRUE
+"
+"0","library(forcats)"
+"0","library(gridExtra)"
+"2","
+Adjuntando el paquete: ‘gridExtra’
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    combine
+
+"
+"0","library(grid)"
+"0","library(lubridate)"
+"0","library(ggplot2)"
+"0","library(ggraph)"
+"0","library(igraph)"
+"2","
+Adjuntando el paquete: ‘igraph’
+
+"
+"2","The following objects are masked from ‘package:lubridate’:
+
+    %--%, union
+
+"
+"2","The following objects are masked from ‘package:dplyr’:
+
+    as_data_frame, groups, union
+
+"
+"2","The following objects are masked from ‘package:purrr’:
+
+    compose, simplify
+
+"
+"2","The following object is masked from ‘package:tidyr’:
+
+    crossing
+
+"
+"2","The following object is masked from ‘package:tibble’:
+
+    as_data_frame
+
+"
+"2","The following objects are masked from ‘package:stats’:
+
+    decompose, spectrum
+
+"
+"2","The following object is masked from ‘package:base’:
+
+    union
+
+"
+"0","library(glue)"

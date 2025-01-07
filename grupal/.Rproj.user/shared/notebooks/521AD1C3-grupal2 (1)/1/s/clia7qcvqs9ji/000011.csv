@@ -1,0 +1,6 @@
+"0","# Consolidar votos a nivel de municipio y fecha"
+"0","datos_agrupados <- datos_largos |> "
+"0","  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio, partido) |> "
+"0","  summarise(votos = sum(votos, na.rm = TRUE), .groups = ""drop"")"
+"0",""
+"0","head(datos_agrupados)"
