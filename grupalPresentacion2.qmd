@@ -343,12 +343,13 @@ datos_largos <- election_data_final |>
 datos_largos
 ```
 
-## 2. Agrupamos los votos a nivel de elección y partido, y renombramos con las siglas 
+## 2. Agrupamos los votos y renombramos con las siglas 
 ```{r}
 datos_agrupados <- datos_largos |> 
-  group_by(fecha, partido) |> 
+  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio, partido) |> 
   summarise(votos = sum(votos, na.rm = TRUE), .groups = "drop")
 
+head(datos_agrupados)
 # llamamos a la función para reemplazar el nombre
 datos_agrupados <- reemplazar_por_siglas(
   data = datos_agrupados,
@@ -358,42 +359,76 @@ datos_agrupados <- reemplazar_por_siglas(
 datos_agrupados
 ```
 
-## 3. Creamos una estructura jerárquica para el gráfico y generamos el gráfico
+## 3. Hacemos un ranking por municipios
+
 ```{r}
-datos_agrupados <- datos_agrupados |> 
-  mutate(
-    pathString = paste(
-      "Resultados", 
-      fecha,         
-      partido,       
-      sep = "/"
-    )
-  )
+resultados_ordenados <- datos_agrupados |> 
+  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio) |> 
+  arrange(desc(votos)) |> 
+  mutate(ranking = row_number()) |> 
+  ungroup()
+head(resultados_ordenados)
+```
 
-arbol_datos <- as.Node(datos_agrupados)
+## 4.  Filtramos y calculamos el segundo partido 
 
+```{r}
+# Filtrar y calcular el segundo partido
+segundo_partido_municipios <- resultados_ordenados |> 
+  filter(ranking <= 2) |> 
+  group_by(tipo_eleccion, fecha, vuelta, codigo_ccaa, codigo_provincia, codigo_municipio) |> 
+  mutate(primer_partido = partido[ranking == 1]) |> 
+  filter(primer_partido %in% c("PSOE", "PP") & ranking == 2) |> 
+  ungroup()
+
+# Contar el número de municipios para cada combinación de primer y segundo partido
+segundo_partido_municipios_grouped <- segundo_partido_municipios |> 
+  group_by(fecha, primer_partido, partido) |> 
+  summarise(frecuencia = n_distinct(codigo_municipio), .groups = "drop")
+```
+
+## 5. Representamos 
+
+<details>
+
+<summary>Ver codigo</summary>
+
+```{r}
+# Crear estructura jerárquica para el gráfico
+segundo_partido_municipios_grouped$pathString <- paste(
+  "Resultados",
+  format(segundo_partido_municipios_grouped$fecha, "%Y-%m"),
+  segundo_partido_municipios_grouped$primer_partido,
+  segundo_partido_municipios_grouped$partido,
+  sep = "/"
+)
+
+# Crear un nodo jerárquico
+arbol_datos_municipios <- as.Node(segundo_partido_municipios_grouped)
+
+# Generar el gráfico
 grafico_circulos <- circlepackeR(
-  arbol_datos,
-  size = "votos",  # Usar los votos como métrica para el tamaño del nodo
-  color_min = "hsl(0,100%,80%)",  # Color mínimo
-  color_max = "hsl(240,100%,80%)",  # Color máximo
-  width = 400,
-  height = 400
+  arbol_datos_municipios,
+  size = "frecuencia",
+  color_min = "hsl(412,80%,80%)",
+  color_max = "hsl(228,30%,40%)", 
+  width = 850, 
+  height = 800
 )
 ```
 
 ---
 
-## Jerarquía de los Partidos Políticos 
-```{r}
-#| echo: false
-grafico_circulos
+## Gráfico círculos
 
+```{r}
+
+grafico_circulos
 ```
 
 ---
 
-## Tabla de los datos anteriores: 
+## Tabla de las elecciones generales
 
 ```{r}
 tabla_resultados <- datos_largos |> 
@@ -785,6 +820,20 @@ grafico4 <- ggplot(election_data_final2, aes(x = categoria_censo, fill = partido
 grafico4
 ```
 
+## Prueba exacta de Fisher
+
+```{r}
+tabla_contingencia <- table(election_data_final2$categoria_censo, election_data_final2$partido_ganador)
+tabla_contingencia
+```
+
+```{r}
+fisher_test <- fisher.test(tabla_contingencia, simulate.p.value = TRUE, B = 100000)
+fisher_test
+```
+
+H0: La categoría de censo (Rural/Urbana) y el partido ganador son independientes. Es decir, el partido ganador no depende de si la zona es rural o urbana.
+H1: Hay asociación entre la categoría de censo y el partido ganador. Es decir, el partido ganador sí depende de si la zona es rural o urbana.
 
 # Análisis de los partidos nacionalistas vascos en Navarra
 
